@@ -3,9 +3,13 @@ import org.kde.kirigami as Kirigami
 
 Rectangle {
     id: root
-    color: "#211E1E"
+    color: Kirigami.Theme.backgroundColor
 
     property int stage
+    readonly property bool darkBackground: {
+        const c = Kirigami.Theme.backgroundColor;
+        return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b < 0.5;
+    }
 
     onStageChanged: {
         if (stage == 2) {
@@ -22,7 +26,7 @@ Rectangle {
             id: logo
             anchors.centerIn: parent
             asynchronous: true
-            source: "images/wordmark.png"
+            source: root.darkBackground ? "images/wordmark.png" : "images/wordmark-light.png"
             sourceSize.width: Math.min(parent.width * 0.45, 1400)
             sourceSize.height: Math.min(parent.width * 0.45 / 5.57, 260)
             fillMode: Image.PreserveAspectFit
@@ -38,14 +42,19 @@ Rectangle {
                 topMargin: Kirigami.Units.largeSpacing * 2
                 horizontalCenter: parent.horizontalCenter
             }
-            color: "#2A2626"
+            color: Qt.rgba(
+                Kirigami.Theme.textColor.r,
+                Kirigami.Theme.textColor.g,
+                Kirigami.Theme.textColor.b,
+                0.18
+            )
 
             Rectangle {
                 id: progressFill
-                width: parent.width * (root.stage / 5)
+                width: parent.width * (Math.max(0, Math.min(root.stage, 5)) / 5)
                 height: parent.height
                 radius: parent.radius
-                color: "#FAB283"
+                color: Kirigami.Theme.highlightColor
             }
         }
     }
