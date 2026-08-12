@@ -39,7 +39,7 @@ wallpaper when you switch between OpenCode Dark and OpenCode Light.
 | **Accent (peach)** | `#FAB283` |
 | Peach hover     | `#FFC09F`  |
 | Peach deep      | `#D98A5E`  |
-| Purple          | `#9D7CD8`  |
+| Purple          | `#7651B5`  |
 
 ### OpenCode Light
 
@@ -69,8 +69,8 @@ konsole/       Konsole color schemes + profiles (dark + light)
 alacritty/     Importable alacritty color files (dark + light)
 terminals/     ghostty / kitty / wezterm theme files (dark + light)
 starship/      Starship prompt configs (dark + light)
-vscode/        VS Code extension "OpenCode Theme" (dark + light, packaged as .vsix)
-scripts/       generate-wallpaper.sh / generate-preview.sh / capture-screenshots.sh
+vscode/        VS Code extension sources (dark + light; VSIX is generated at release build)
+scripts/       generators, validator, test entry point and release builder
 screenshots/   Real captures — desktop, Konsole, VS Code (dark + light)
 install.sh / uninstall.sh
 ```
@@ -89,7 +89,7 @@ install.sh / uninstall.sh
 2. **Install** — `./install.sh` (adds `light` to install the light variant instead)
 3. **Apply** — pick **OpenCode Dark** or **OpenCode Light** in *System Settings → Colors & Themes → Global Theme* (the script already applied one variant)
 4. **Optional extras** — Konsole profile, Alacritty import, Starship, VS Code extension, ghostty/kitty/wezterm (see [Terminal prompts & editors](#terminal-prompts--editors))
-5. **Done** — wallpaper, panel, lock screen and boot splash all follow the theme automatically
+5. **Done** — wallpaper, panel, Plasma lock screen and boot splash follow the theme
 
 ## Install
 
@@ -123,25 +123,33 @@ For Konsole, *Settings → Switch Profile → OpenCode Dark / OpenCode Light*
 
 ```bash
 cp starship/opencode-dark.toml ~/.config/starship.toml   # requires starship
-code --install-extension ~/.config/opencode-theme.vsix    # VS Code (installed by install.sh)
+code --install-extension ~/.config/opencode-theme.vsix   # source/full-bundle install
+# or: code --install-extension dist/opencode-theme-1.0.0.vsix
 # ghostty:  theme = opencode-dark
 # kitty:    include ~/.config/kitty/opencode-dark.conf
 # wezterm:  dofile('~/.config/wezterm/opencode-dark.lua').colors
 ```
 
-### Boot splash & login screen
+### Boot splash, lock screen and login screen
 
-The boot splash follows the Global Theme (OpenCode wordmark + peach progress
-bar). The login screen needs no setup — it picks up the color scheme, desktop
-theme and wallpaper automatically. The lock screen follows the color scheme
-and wallpaper automatically.
+The adaptive Plasma boot splash uses the active color scheme. Plasma's lock
+screen follows the Plasma style and wallpaper. The SDDM login screen is a
+separate theme system: this project does not ship an SDDM theme and the
+installer does not configure SDDM.
 
-### Manual / KDE Store install of just one Global Theme
+### Install a built release bundle
 
 ```bash
-kpackagetool6 --type Plasma/LookAndFeel --install lookandfeel/com.kim.opencode-dark
-kpackagetool6 --type Plasma/LookAndFeel --install lookandfeel/com.kim.opencode-light
+tar -xzf dist/opencode-theme-1.0.0.tar.gz
+cd opencode-theme-1.0.0
+./install.sh light   # omit "light" to apply dark
 ```
+
+This complete bundle contains all Plasma, terminal, splash, wallpaper, and VS
+Code files expected by `install.sh`. The individual
+`opencode-lookandfeel-{dark,light}-1.0.0.tar.gz` artifacts are partial KDE
+component packages: they do not install the separate Plasma desktop theme,
+terminal themes, splash, or editor extension.
 
 ## Customizing the accent color
 
@@ -158,13 +166,15 @@ Note: the terminal themes (Konsole, Alacritty, ghostty/kitty/wezterm) and the VS
 *System Settings → Colors & Themes → Global Theme → OpenCode Dark / OpenCode Light*, or re-run `./install.sh light` / `./install.sh`. The wallpaper switches variant automatically.
 
 **Does the theme change my panel layout or desktop widgets?**
-No. The theme only provides colors, wallpaper, splash and login/lock-screen look. Panel layouts were intentionally kept out.
+No. It provides colors, a Plasma desktop style, wallpaper, and splash, but no
+panel layout or widget configuration.
 
 **GTK apps (Firefox, Thunar, …) don't follow the theme?**
 GTK apps need their own GTK theme — this project is Plasma-only, so GTK apps keep their default look.
 
 **Does the login/lock screen pick it up automatically?**
-Yes — the lock screen follows the color scheme and wallpaper; the login screen follows the color scheme, desktop theme and wallpaper.
+The Plasma lock screen follows the Plasma style and wallpaper. SDDM does not:
+it requires a dedicated SDDM theme, which this project does not include.
 
 **Which Plasma version do I need?**
 Plasma 6 (uses `plasma-apply-*` tools and `kwriteconfig6`).
@@ -206,7 +216,27 @@ scripts/generate-wallpaper.sh wallpaper 3840x2160   # dark + light pair, any res
 scripts/generate-preview.sh previews 1280x720
 ```
 
+The repository stores one canonical light/dark wallpaper pair under
+`wallpaper/OpenCode`. Release staging embeds that pair into each standalone
+LookAndFeel artifact, avoiding duplicate 4K source assets.
+
+## Validate and build a release
+
+Run the full local test suite, then generate versioned artifacts from `VERSION`:
+
+```bash
+./scripts/test.sh
+./scripts/build-release.sh
+```
+
+The release build atomically replaces `dist/` only after validation succeeds.
+It writes the complete bundle, component archives, a generated VSIX, and
+`SHA256SUMS`. For version 1.0.0, the main outputs include
+`dist/opencode-theme-1.0.0.tar.gz` and
+`dist/opencode-theme-1.0.0.vsix`.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
-The wallpapers are generated from gradients, text and shapes (no third-party assets).
+Wordmark provenance and the upstream license are recorded in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
