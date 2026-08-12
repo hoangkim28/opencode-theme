@@ -7,12 +7,25 @@
 #   contents/images_dark/   dark variant (used with dark color schemes)
 # Plasma auto-switches between them when the color scheme changes.
 # Usage: ./generate-wallpaper.sh [output-dir] [WIDTHxHEIGHT]
-set -e
+set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTDIR="${1:-$HERE/../wallpaper}"
 SIZE="${2:-3840x2160}"
-W="${SIZE%x*}"; H="${SIZE#*x}"
+if [[ ! "$SIZE" =~ ^([1-9][0-9]*)x([1-9][0-9]*)$ ]]; then
+    echo "ERROR: size must be WIDTHxHEIGHT using positive integers" >&2
+    exit 2
+fi
+W="${BASH_REMATCH[1]}"
+H="${BASH_REMATCH[2]}"
+
+TEMP_FILES=()
+cleanup() {
+    if ((${#TEMP_FILES[@]})); then
+        rm -f -- "${TEMP_FILES[@]}"
+    fi
+}
+trap cleanup EXIT
 
 make_wallpaper() {
     # $1 base  $2 glow  $3 wordmark-png  $4 vignette  $5 out
@@ -21,6 +34,8 @@ make_wallpaper() {
 
     # official wordmark centered, scaled to 30% of canvas width
     WORDTMP="$(mktemp --suffix=.png)"
+    TEMP_FILES+=("$WORDTMP")
+    mkdir -p "$(dirname "$OUT")"
     WW=$(( W * 30 / 100 ))
     magick "$WORDMARK" -resize "${WW}x" -strip "$WORDTMP"
     WW="$(magick identify -format '%w' "$WORDTMP")"
@@ -32,7 +47,6 @@ make_wallpaper() {
         \( -size "$SIZE" radial-gradient:'rgba(255,255,255,0)'-"$VIGN" \) -compose over -composite \
         -attenuate 0.04 +noise Gaussian -depth 8 -strip -quality 92 "$OUT"
 
-    rm -f "$WORDTMP"
     echo "Wrote $OUT ($SIZE)"
 }
 

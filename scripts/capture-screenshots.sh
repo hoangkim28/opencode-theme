@@ -7,6 +7,14 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(dirname "$HERE")"
 MODE="${1:-all}"
 
+case "$MODE" in
+    dark|light|all) ;;
+    *)
+        echo "ERROR: mode must be dark, light, or all" >&2
+        exit 2
+        ;;
+esac
+
 case "${XDG_CURRENT_DESKTOP:-}" in
     *KDE*) ;;
     *)
