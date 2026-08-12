@@ -38,5 +38,5 @@ test("Ghostty colors accept six-digit hex and reject embedded whitespace", () =>
 test("repository theme validation succeeds", () => {
   const result = validateRepository();
   assert.ok(result.files >= 18, "all canonical palette formats are validated");
-  assert.ok(result.contrastPairs >= 170, "all visible text roles are validated");
+  assert.ok(result.contrastPairs >= 519, "all visible text roles are validated");
 });

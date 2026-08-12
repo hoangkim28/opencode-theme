@@ -4,7 +4,12 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VERSION="$(tr -d '[:space:]' < "$ROOT/VERSION")"
 TEST_TMP="$(mktemp -d)"
-trap 'rm -rf -- "$TEST_TMP"' EXIT
+SYMLINK_TEST="$ROOT/terminals/.release-test-link"
+cleanup() {
+    rm -f -- "$SYMLINK_TEST"
+    rm -rf -- "$TEST_TMP"
+}
+trap cleanup EXIT
 
 cd "$ROOT"
 
@@ -16,6 +21,25 @@ if compgen -G 'vscode/*.vsix' >/dev/null; then
 fi
 
 scripts/build-release.sh >/dev/null
+cp dist/SHA256SUMS "$TEST_TMP/first-sums"
+touch dist/.preserve-on-failure
+
+if OPENCODE_BUILD_FAILPOINT=after-backup scripts/build-release.sh >/dev/null 2>&1; then
+    echo "release failpoint unexpectedly succeeded" >&2
+    exit 1
+fi
+test -f dist/.preserve-on-failure
+
+ln -s /etc/passwd "$SYMLINK_TEST"
+if scripts/build-release.sh >/dev/null 2>&1; then
+    echo "release build unexpectedly accepted a source symlink" >&2
+    exit 1
+fi
+test -f dist/.preserve-on-failure
+rm -f -- "$SYMLINK_TEST" dist/.preserve-on-failure
+
+scripts/build-release.sh >/dev/null
+cmp "$TEST_TMP/first-sums" dist/SHA256SUMS
 
 artifacts=(
     "opencode-lookandfeel-dark-$VERSION.tar.gz"

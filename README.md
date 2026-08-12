@@ -123,8 +123,8 @@ For Konsole, *Settings → Switch Profile → OpenCode Dark / OpenCode Light*
 
 ```bash
 cp starship/opencode-dark.toml ~/.config/starship.toml   # requires starship
-code --install-extension ~/.config/opencode-theme.vsix   # source/full-bundle install
-# or: code --install-extension dist/opencode-theme-1.0.0.vsix
+code --install-extension ~/.config/opencode-theme.vsix   # after installing the full bundle
+# source checkout after build: code --install-extension dist/opencode-theme-1.0.0.vsix
 # ghostty:  theme = opencode-dark
 # kitty:    include ~/.config/kitty/opencode-dark.conf
 # wezterm:  dofile('~/.config/wezterm/opencode-dark.lua').colors

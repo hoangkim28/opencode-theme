@@ -3,13 +3,38 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VERSION="$(tr -d '[:space:]' < "$ROOT/VERSION")"
-BUILD_TMP="$(mktemp -d)"
-trap 'rm -rf -- "$BUILD_TMP"' EXIT
+DIST="$ROOT/dist"
+BACKUP="$ROOT/.dist.previous.$$"
+BUILD_ROOT="$(mktemp -d "$ROOT/.dist.next.XXXXXX")"
+BUILD_TMP="$BUILD_ROOT/work"
+OLD_MOVED=false
+PUBLISHING=false
+PUBLISHED=false
+
+cleanup() {
+    local status=$?
+    trap - EXIT HUP INT TERM
+    if [[ "$PUBLISHED" != true && "$PUBLISHING" == true ]]; then
+        if [[ -e "$DIST" ]]; then
+            rm -rf -- "$DIST"
+        fi
+        if [[ "$OLD_MOVED" == true && -e "$BACKUP" ]] && ! mv "$BACKUP" "$DIST"; then
+            echo "ERROR: release rollback failed; previous output remains at $BACKUP" >&2
+        fi
+    fi
+    rm -rf -- "$BUILD_ROOT"
+    exit "$status"
+}
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
 STAGE="$BUILD_TMP/opencode-theme-$VERSION"
 OUT="$BUILD_TMP/out"
 mkdir -p "$STAGE" "$OUT"
 
-for command_name in node tar gzip zip unzip sha256sum cmp find sort; do
+for command_name in node tar gzip zip unzip sha256sum cmp find sort awk; do
     if ! command -v "$command_name" >/dev/null 2>&1; then
         echo "ERROR: required command not found: $command_name" >&2
         exit 1
@@ -42,6 +67,12 @@ for variant in dark light; do
     package="$STAGE/lookandfeel/com.kim.opencode-$variant"
     copy_tree "$ROOT/wallpaper/OpenCode" "$package/contents/wallpapers/OpenCode"
 done
+
+SOURCE_SYMLINK="$(find "$STAGE" -type l -print -quit)"
+if [[ -n "$SOURCE_SYMLINK" ]]; then
+    echo "ERROR: release source contains a symlink: $SOURCE_SYMLINK" >&2
+    exit 1
+fi
 
 VSIX_STAGE="$BUILD_TMP/vsix"
 mkdir -p "$VSIX_STAGE/extension/themes"
@@ -85,16 +116,62 @@ cmp "$ROOT/vscode/themes/opencode-light.json" "$VSIX_CHECK/extension/themes/open
     sha256sum -c SHA256SUMS >/dev/null
 )
 
-DIST="$ROOT/dist"
-BACKUP="$ROOT/.dist-backup-$$"
+for archive in "$OUT"/*.tar.gz; do
+    if tar -tvf "$archive" | awk '$1 ~ /^l/ { found=1 } END { exit !found }'; then
+        echo "ERROR: release archive contains a symlink: $archive" >&2
+        exit 1
+    fi
+done
+
+FULL_CHECK="$BUILD_TMP/full-check"
+mkdir -p "$FULL_CHECK"
+tar -xzf "$OUT/opencode-theme-$VERSION.tar.gz" -C "$FULL_CHECK"
+BUNDLE_CHECK="$FULL_CHECK/opencode-theme-$VERSION"
+for required_path in \
+    desktoptheme/opencode-dark/metadata.json \
+    desktoptheme/opencode-light/metadata.json \
+    wallpaper/OpenCode/metadata.json \
+    splash/com.kim.opencode-splash/contents/splash/images/wordmark-light.png \
+    terminals/ghostty/opencode-dark \
+    vscode/themes/opencode-dark.json \
+    "vscode/opencode-theme-$VERSION.vsix" \
+    install.sh uninstall.sh THIRD_PARTY_NOTICES.md; do
+    if [[ ! -e "$BUNDLE_CHECK/$required_path" ]]; then
+        echo "ERROR: complete release is missing $required_path" >&2
+        exit 1
+    fi
+done
+
+if command -v kpackagetool6 >/dev/null 2>&1; then
+    KDE_DATA="$BUILD_TMP/kde-data"
+    mkdir -p "$KDE_DATA"
+    XDG_DATA_HOME="$KDE_DATA" kpackagetool6 --type Plasma/LookAndFeel \
+        --install "$STAGE/lookandfeel/com.kim.opencode-dark" >/dev/null
+    XDG_DATA_HOME="$KDE_DATA" kpackagetool6 --type Plasma/LookAndFeel \
+        --install "$STAGE/lookandfeel/com.kim.opencode-light" >/dev/null
+    XDG_DATA_HOME="$KDE_DATA" kpackagetool6 --type Plasma/LookAndFeel \
+        --install "$STAGE/splash/com.kim.opencode-splash" >/dev/null
+    XDG_DATA_HOME="$KDE_DATA" kpackagetool6 --type Wallpaper/Images \
+        --install "$STAGE/wallpaper/OpenCode" >/dev/null
+else
+    echo "WARNING: kpackagetool6 unavailable; skipped KDE package smoke checks" >&2
+fi
+
 if [[ -e "$BACKUP" ]]; then
     echo "ERROR: unexpected release backup already exists: $BACKUP" >&2
     exit 1
 fi
+PUBLISHING=true
 if [[ -e "$DIST" ]]; then
     mv "$DIST" "$BACKUP"
+    OLD_MOVED=true
+fi
+if [[ "${OPENCODE_BUILD_FAILPOINT:-}" == "after-backup" ]]; then
+    echo "ERROR: requested test failpoint after backup" >&2
+    exit 99
 fi
 if mv "$OUT" "$DIST"; then
+    PUBLISHED=true
     [[ ! -e "$BACKUP" ]] || rm -rf -- "$BACKUP"
 else
     [[ ! -e "$BACKUP" ]] || mv "$BACKUP" "$DIST"

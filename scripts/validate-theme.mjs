@@ -55,6 +55,14 @@ function validateGhostty(relativePath) {
 function validateVsCodeTheme(relativePath) {
   const theme = readJson(relativePath);
   const background = theme.colors["editor.background"];
+  const excludedInactiveRoles = [
+    "disabledForeground",
+    "activityBar.inactiveForeground",
+    "titleBar.inactiveForeground",
+  ];
+  for (const role of excludedInactiveRoles) {
+    assert.ok(theme.colors[role], `${relativePath}: missing documented inactive role ${role}`);
+  }
   const pairs = [
     ["editor foreground", theme.colors["editor.foreground"], background],
     ["editor line number", theme.colors["editorLineNumber.foreground"], background],
@@ -93,11 +101,32 @@ function parseSimpleAssignments(relativePath) {
 }
 
 function validateTerminalSelections() {
-  const alacritty = parseSimpleAssignments("alacritty/opencode-light.toml");
+  const alacrittyContent = readFileSync(join(root, "alacritty/opencode-light.toml"), "utf8");
+  const alacrittySections = new Map();
+  let section = "";
+  for (const line of alacrittyContent.split("\n")) {
+    const heading = line.match(/^\[([^\]]+)\]$/);
+    if (heading) {
+      section = heading[1];
+      alacrittySections.set(section, new Map());
+      continue;
+    }
+    const assignment = line.match(/^\s*([a-z]+)\s*=\s*"(?:0x|#)([0-9a-f]{6})"/i);
+    if (assignment && alacrittySections.has(section)) {
+      alacrittySections.get(section).set(assignment[1], `#${assignment[2]}`);
+    }
+  }
+  const alacrittyCursor = alacrittySections.get("colors.cursor");
+  const alacrittySelection = alacrittySections.get("colors.selection");
   assertContrast(
     "Alacritty light selection",
-    alacritty.get("text"),
-    alacritty.get("background"),
+    alacrittySelection.get("text"),
+    alacrittySelection.get("background"),
+  );
+  assertContrast(
+    "Alacritty light cursor",
+    alacrittyCursor.get("text"),
+    alacrittyCursor.get("cursor"),
   );
 
   const kitty = parseSimpleAssignments("terminals/kitty/opencode-light.conf");
@@ -105,6 +134,11 @@ function validateTerminalSelections() {
     "Kitty light selection",
     kitty.get("selection_foreground"),
     kitty.get("selection_background"),
+  );
+  assertContrast(
+    "Kitty light cursor",
+    kitty.get("cursor_text_color"),
+    kitty.get("cursor"),
   );
 
   const ghosttyContent = validateGhostty("terminals/ghostty/opencode-light");
@@ -115,7 +149,30 @@ function validateTerminalSelections() {
     `#${selectionForeground}`,
     `#${selectionBackground}`,
   );
-  return 3;
+
+  const wezterm = readFileSync(join(root, "terminals/wezterm/opencode-light.lua"), "utf8");
+  const weztermColor = (key) => {
+    const match = wezterm.match(
+      new RegExp(`^\\s*${key}\\s*=\\s*(?:\\{\\s*Color\\s*=\\s*)?"(#[0-9a-f]{6})"`, "im"),
+    );
+    assert.ok(match, `WezTerm light: missing ${key}`);
+    return match[1];
+  };
+  for (const [label, foregroundKey, backgroundKey] of [
+    ["cursor", "cursor_fg", "cursor_bg"],
+    ["selection", "selection_fg", "selection_bg"],
+    ["active copy highlight", "copy_mode_active_highlight_fg", "copy_mode_active_highlight_bg"],
+    ["inactive copy highlight", "copy_mode_inactive_highlight_fg", "copy_mode_inactive_highlight_bg"],
+    ["quick-select label", "quick_select_label_fg", "quick_select_label_bg"],
+    ["quick-select match", "quick_select_match_fg", "quick_select_match_bg"],
+  ]) {
+    assertContrast(
+      `WezTerm light ${label}`,
+      weztermColor(foregroundKey),
+      weztermColor(backgroundKey),
+    );
+  }
+  return 11;
 }
 
 function colorsFromText(content) {
@@ -134,24 +191,41 @@ function validateColorList(label, colors, background) {
 
 function validateLightTerminalPalettes() {
   const background = "#F1ECEC";
+  const canonicalAnsi = [
+    "#4B4646", "#B52A30", "#257A3E", "#7A5B00",
+    "#2968C3", "#7651B5", "#1E6E79", "#211E1E",
+    "#6B6666", "#B52A30", "#257A3E", "#7A5B00",
+    "#2968C3", "#7651B5", "#1E6E79", "#1A1A1A",
+  ];
   let pairs = 0;
 
   const alacritty = readFileSync(join(root, "alacritty/opencode-light.toml"), "utf8");
   const alacrittyTextColors = [...alacritty.matchAll(
     /^\s*(?:foreground|black|red|green|yellow|blue|magenta|cyan|white)\s*=\s*["'](0x[0-9a-f]{6})["']/gim,
   )].map((match) => match[1].replace(/^0x/i, "#"));
+  assert.deepEqual(alacrittyTextColors.slice(1), canonicalAnsi, "Alacritty light ANSI palette drift");
   pairs += validateColorList("Alacritty light palette", alacrittyTextColors, background);
 
   const ghostty = readFileSync(join(root, "terminals/ghostty/opencode-light"), "utf8");
   const ghosttyTextColors = [...ghostty.matchAll(
     /^\s*(?:foreground|palette)\s*=\s*(?:\d+=)?([0-9a-f]{6})\s*$/gim,
   )].map((match) => `#${match[1]}`);
+  assert.deepEqual(
+    ghosttyTextColors.slice(1).map((color) => color.toUpperCase()),
+    canonicalAnsi,
+    "Ghostty light ANSI palette drift",
+  );
   pairs += validateColorList("Ghostty light palette", ghosttyTextColors, background);
 
   const kitty = readFileSync(join(root, "terminals/kitty/opencode-light.conf"), "utf8");
   const kittyTextColors = [...kitty.matchAll(
     /^\s*(?:foreground|color\d+)\s+#([0-9a-f]{6})\s*$/gim,
   )].map((match) => `#${match[1]}`);
+  assert.deepEqual(
+    kittyTextColors.slice(1).map((color) => color.toUpperCase()),
+    canonicalAnsi,
+    "Kitty light ANSI palette drift",
+  );
   pairs += validateColorList("Kitty light palette", kittyTextColors, background);
 
   const wezterm = readFileSync(join(root, "terminals/wezterm/opencode-light.lua"), "utf8");
@@ -161,21 +235,31 @@ function validateLightTerminalPalettes() {
     assert.ok(block, `WezTerm light: missing ${blockName} block`);
     weztermTextColors.push(...colorsFromText(block[1]));
   }
+  assert.deepEqual(weztermTextColors, canonicalAnsi, "WezTerm light ANSI palette drift");
   pairs += validateColorList("WezTerm light palette", weztermTextColors, background);
 
   const konsole = readFileSync(join(root, "konsole/OpenCodeLight.colorscheme"), "utf8");
   let section = "";
   const konsoleTextColors = [];
+  const konsoleSections = new Map();
   for (const line of konsole.split("\n")) {
     const heading = line.match(/^\[([^\]]+)\]$/);
     if (heading) section = heading[1];
     const color = line.match(/^Color=(\d+),(\d+),(\d+)$/);
     if (color && (/^Color[0-7](?:Intense)?$/.test(section) || /^Foreground/.test(section))) {
-      konsoleTextColors.push(
-        `#${color.slice(1).map((channel) => Number(channel).toString(16).padStart(2, "0")).join("")}`,
-      );
+      const hex = `#${color.slice(1).map((channel) => Number(channel).toString(16).padStart(2, "0")).join("")}`;
+      konsoleTextColors.push(hex);
+      konsoleSections.set(section, hex.toUpperCase());
     }
   }
+  assert.deepEqual(
+    [
+      ...Array.from({ length: 8 }, (_, index) => konsoleSections.get(`Color${index}`)),
+      ...Array.from({ length: 8 }, (_, index) => konsoleSections.get(`Color${index}Intense`)),
+    ],
+    canonicalAnsi,
+    "Konsole light ANSI palette drift",
+  );
   pairs += validateColorList("Konsole light palette", konsoleTextColors, background);
 
   const starship = readFileSync(join(root, "starship/opencode-light.toml"), "utf8");
@@ -226,18 +310,31 @@ function validateKdeLightSchemes() {
     "ForegroundPositive",
     "ForegroundVisited",
   ];
+  // KDE's explicitly inactive role is exempt from normal-text AA. All other
+  // foreground roles used by the scheme are validated on both surface colors.
+  const excludedForegroundRoles = new Set(["ForegroundInactive"]);
   for (const file of files) {
     assert.equal(readFileSync(join(root, file), "utf8"), canonical, `${file}: light KDE palette drift`);
     const sections = parseKdeColorScheme(file);
     for (const [name, values] of sections) {
       if (!name.startsWith("Colors:")) continue;
-      const background = values.get("BackgroundNormal");
-      assert.ok(background, `${file}: ${name} missing BackgroundNormal`);
-      for (const role of foregroundRoles) {
-        const foreground = values.get(role);
-        assert.ok(foreground, `${file}: ${name} missing ${role}`);
-        assertContrast(`${file}: ${name} ${role}`, foreground, background);
-        pairs += 1;
+      for (const key of values.keys()) {
+        if (key.startsWith("Foreground") && !foregroundRoles.includes(key)) {
+          assert.ok(
+            excludedForegroundRoles.has(key),
+            `${file}: ${name} has undocumented contrast exclusion ${key}`,
+          );
+        }
+      }
+      for (const backgroundRole of ["BackgroundNormal", "BackgroundAlternate"]) {
+        const background = values.get(backgroundRole);
+        assert.ok(background, `${file}: ${name} missing ${backgroundRole}`);
+        for (const role of foregroundRoles) {
+          const foreground = values.get(role);
+          assert.ok(foreground, `${file}: ${name} missing ${role}`);
+          assertContrast(`${file}: ${name} ${role} on ${backgroundRole}`, foreground, background);
+          pairs += 1;
+        }
       }
     }
   }

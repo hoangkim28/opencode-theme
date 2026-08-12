@@ -74,6 +74,8 @@ echo "    starship: cp starship/opencode-dark.toml ~/.config/starship.toml"
 if [ -f "$HERE/vscode/opencode-theme-$RELEASE_VERSION.vsix" ]; then
     cp "$HERE/vscode/opencode-theme-$RELEASE_VERSION.vsix" "$CONF/opencode-theme.vsix"
     echo "    vscode:   code --install-extension $CONF/opencode-theme.vsix"
+else
+    echo "    vscode:   VSIX is generated at release build; run scripts/build-release.sh and install it from dist/"
 fi
 
 if [ "$MODE" = "noapply" ]; then
