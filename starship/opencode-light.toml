@@ -4,14 +4,14 @@
 format = """$username$hostname$directory$git_branch$git_status$python$rust$nodejs$golang$cmd_duration$line_break$character"""
 
 [character]
-success_symbol = "[\u276f](bold #D68C27) "
-error_symbol = "[\u276f](bold #D1383D) "
-vimcmd_symbol = "[\u276f](bold #318795) "
+success_symbol = "[\u276f](bold #8A5200) "
+error_symbol = "[\u276f](bold #B52A30) "
+vimcmd_symbol = "[\u276f](bold #1E6E79) "
 
 [username]
 show_always = false
 style_user = "bold #211E1E"
-style_root = "bold #D1383D"
+style_root = "bold #B52A30"
 format = "[$user]($style) "
 
 [hostname]
@@ -26,11 +26,11 @@ format = "[$path]($style)[$read_only]($read_only_style) "
 
 [git_branch]
 symbol = ""
-style = "bold #9D7CD8"
+style = "bold #7651B5"
 format = "[$symbol$branch]($style) "
 
 [git_status]
-style = "#3D9A57"
+style = "#257A3E"
 conflicted = "=\uf071 "
 up_to_date = ""
 untracked = "?\uf059 "
@@ -50,20 +50,20 @@ format = "took [$duration]($style) "
 
 [python]
 symbol = "\uf235 "
-style = "bold #B0851F"
+style = "bold #7A5B00"
 format = "[$symbol$version]($style) "
 
 [rust]
 symbol = "\ue7a8 "
-style = "bold #D68C27"
+style = "bold #8A5200"
 format = "[$symbol$version]($style) "
 
 [nodejs]
 symbol = "\uf898 "
-style = "bold #3D9A57"
+style = "bold #257A3E"
 format = "[$symbol$version]($style) "
 
 [golang]
 symbol = "\ue626 "
-style = "bold #318795"
+style = "bold #1E6E79"
 format = "[$symbol$version]($style) "

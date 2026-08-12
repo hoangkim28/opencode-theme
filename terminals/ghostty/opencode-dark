@@ -3,7 +3,7 @@
 # (or put the [theme] section in your ghostty config)
 
 background = 211e1e
-foreground = cfc ecd
+foreground = cfcecd
 cursor-color = fab283
 selection-background = fab283
 selection-foreground = 211e1e
