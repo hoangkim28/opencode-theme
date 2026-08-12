@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    container: debian:trixie
+    steps:
+      - name: Install validators
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            bash git imagemagick jq kpackagetool6 nodejs plasma-workspace \
+            tar unzip zip
+      - uses: actions/checkout@v4
+      - name: Validate source and release artifacts
+        run: ./scripts/test.sh --require-kde

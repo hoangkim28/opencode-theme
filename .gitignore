@@ -1,3 +1,6 @@
 dist/
+.dist-backup-*
+.dist.previous.*
+.dist.next.*
 *.bak
 _*
