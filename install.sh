@@ -8,6 +8,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
 CONF="${XDG_CONFIG_HOME:-$HOME/.config}"
 MODE="${1:-dark}"
+RELEASE_VERSION="$(tr -d '[:space:]' < "$HERE/VERSION")"
 case "$MODE" in
     dark|light|noapply) ;;
     *)
@@ -70,8 +71,8 @@ echo "    wezterm:  dofile('~/.config/wezterm/opencode-dark.lua').colors in wezt
 echo "    starship: cp starship/opencode-dark.toml ~/.config/starship.toml"
 
 # 8. VS Code theme extension (packaged .vsix)
-if [ -f "$HERE/vscode/opencode-theme-1.0.0.vsix" ]; then
-    cp "$HERE/vscode/opencode-theme-1.0.0.vsix" "$CONF/opencode-theme.vsix"
+if [ -f "$HERE/vscode/opencode-theme-$RELEASE_VERSION.vsix" ]; then
+    cp "$HERE/vscode/opencode-theme-$RELEASE_VERSION.vsix" "$CONF/opencode-theme.vsix"
     echo "    vscode:   code --install-extension $CONF/opencode-theme.vsix"
 fi
 

@@ -148,6 +148,17 @@ export function validateRepository() {
   const requiredVersion = readFileSync(join(root, "VERSION"), "utf8").trim();
   const vscodePackage = readJson("vscode/package.json");
   assert.equal(vscodePackage.version, requiredVersion, "VS Code version must match VERSION");
+  const vsixManifest = readFileSync(
+    join(root, "vscode/extension.vsixmanifest"),
+    "utf8",
+  );
+  const manifestIdentity = vsixManifest.match(
+    /<Identity\s+[^>]*Id="([^"]+)"[^>]*Version="([^"]+)"[^>]*Publisher="([^"]+)"/,
+  );
+  assert.ok(manifestIdentity, "VSIX manifest Identity is missing or malformed");
+  assert.equal(manifestIdentity[1], vscodePackage.name, "VSIX identity must match package name");
+  assert.equal(manifestIdentity[2], requiredVersion, "VSIX version must match VERSION");
+  assert.equal(manifestIdentity[3], vscodePackage.publisher, "VSIX publisher must match package");
 
   validateGhostty("terminals/ghostty/opencode-dark");
   const contrastPairs =
