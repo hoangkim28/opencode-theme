@@ -1,0 +1,26 @@
+# OpenCode Light — ghostty color theme
+# Usage: copy to ~/.config/ghostty/themes/opencode-light
+# (or put the [theme] section in your ghostty config)
+
+background = f1ecec
+foreground = 211e1e
+cursor-color = d68c27
+selection-background = d68c27
+selection-foreground = f1ecec
+
+palette = 0=4b4646
+palette = 1=d1383d
+palette = 2=3d9a57
+palette = 3=b0851f
+palette = 4=3b7dd8
+palette = 5=9d7cd8
+palette = 6=318795
+palette = 7=211e1e
+palette = 8=8a8585
+palette = 9=e84a50
+palette = 10=4fb86c
+palette = 11=d08f2a
+palette = 12=2968c3
+palette = 13=b08de8
+palette = 14=3d9fb0
+palette = 15=1a1a1a

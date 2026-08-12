@@ -1,0 +1,18 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "sup.hoangkim@gmail.com",
+                "Name": "OpenCode Theme"
+            }
+        ],
+        "Category": "",
+        "Description": "OpenCode boot splash — warm charcoal with the official OpenCode wordmark. Unofficial community theme.",
+        "Id": "com.kim.opencode-splash",
+        "License": "MIT",
+        "Name": "OpenCode Splash",
+        "Version": "1.0.0",
+        "Website": "https://opencode.ai"
+    }
+}

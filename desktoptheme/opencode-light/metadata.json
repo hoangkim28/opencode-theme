@@ -1,0 +1,18 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "sup.hoangkim@gmail.com",
+                "Name": "OpenCode Theme"
+            }
+        ],
+        "Category": "",
+        "Description": "OpenCode Light Plasma desktop theme — warm ivory panel and widgets based on the opencode.ai palette. Unofficial community theme.",
+        "Id": "opencode-light",
+        "License": "MIT",
+        "Name": "OpenCode Light",
+        "Version": "1.0.0",
+        "Website": "https://opencode.ai"
+    },
+    "X-Plasma-API": "5.0"
+}

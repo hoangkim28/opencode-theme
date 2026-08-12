@@ -1,0 +1,15 @@
+{
+    "KPackageStructure": "Plasma/Wallpaper",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "sup.hoangkim@gmail.com",
+                "Name": "OpenCode Theme"
+            }
+        ],
+        "Id": "OpenCode",
+        "License": "MIT",
+        "Name": "OpenCode",
+        "Description": "OpenCode minimal wordmark wallpaper with light and dark variants that follow the Plasma color scheme."
+    }
+}

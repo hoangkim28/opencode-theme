@@ -1,0 +1,39 @@
+# OpenCode Dark — alacritty color scheme
+# Usage: add this to your ~/.config/alacritty/alacritty.toml
+#
+#   [general]
+#   import = ["~/.config/alacritty/opencode-dark.toml"]
+#
+# (or copy the [colors.*] blocks below directly into your config)
+
+[colors.primary]
+background = "0x211E1E"
+foreground = "0xCFCECD"
+
+[colors.cursor]
+text   = "0x211E1E"
+cursor = "0xFAB283"
+
+[colors.selection]
+text       = "0x211E1E"
+background = "0xFAB283"
+
+[colors.normal]
+black   = "0x2A2626"
+red     = "0xE06C75"
+green   = "0x7FD88F"
+yellow  = "0xE5C07B"
+blue    = "0x5C9CF5"
+magenta = "0x9D7CD8"
+cyan    = "0x56B6C2"
+white   = "0xCFCECD"
+
+[colors.bright]
+black   = "0x656363"
+red     = "0xFF8A93"
+green   = "0x9BE8A7"
+yellow  = "0xF2D291"
+blue    = "0x7FB0FF"
+magenta = "0xBDA0E8"
+cyan    = "0x74CBD4"
+white   = "0xE9E8E7"

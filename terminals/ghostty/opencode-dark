@@ -1,0 +1,26 @@
+# OpenCode Dark — ghostty color theme
+# Usage: copy to ~/.config/ghostty/themes/opencode-dark
+# (or put the [theme] section in your ghostty config)
+
+background = 211e1e
+foreground = cfc ecd
+cursor-color = fab283
+selection-background = fab283
+selection-foreground = 211e1e
+
+palette = 0=2a2626
+palette = 1=e06c75
+palette = 2=7fd88f
+palette = 3=e5c07b
+palette = 4=5c9cf5
+palette = 5=9d7cd8
+palette = 6=56b6c2
+palette = 7=cfcecd
+palette = 8=656363
+palette = 9=ff8a93
+palette = 10=9be8a7
+palette = 11=f2d291
+palette = 12=7fb0ff
+palette = 13=bda0e8
+palette = 14=74cbd4
+palette = 15=e9e8e7

@@ -1,0 +1,69 @@
+# OpenCode Light — starship prompt
+# Usage: cp starship/opencode-light.toml ~/.config/starship.toml
+
+format = """$username$hostname$directory$git_branch$git_status$python$rust$nodejs$golang$cmd_duration$line_break$character"""
+
+[character]
+success_symbol = "[\u276f](bold #D68C27) "
+error_symbol = "[\u276f](bold #D1383D) "
+vimcmd_symbol = "[\u276f](bold #318795) "
+
+[username]
+show_always = false
+style_user = "bold #211E1E"
+style_root = "bold #D1383D"
+format = "[$user]($style) "
+
+[hostname]
+ssh_only = true
+style = "#6B6666"
+
+[directory]
+style = "bold #211E1E"
+truncation_length = 3
+read_only = " \uf023"
+format = "[$path]($style)[$read_only]($read_only_style) "
+
+[git_branch]
+symbol = ""
+style = "bold #9D7CD8"
+format = "[$symbol$branch]($style) "
+
+[git_status]
+style = "#3D9A57"
+conflicted = "=\uf071 "
+up_to_date = ""
+untracked = "?\uf059 "
+ahead = "\U000f0788\ufe0e "
+behind = "\U000f0786\ufe0e "
+diverged = "\uf126 "
+deleted = "\uf00d "
+renamed = "\uf039 "
+modified = "\uf111 "
+stashed = "\uf692 "
+format = "([$all_status$ahead_behind]($style)) "
+
+[cmd_duration]
+min_time = 2000
+style = "#6B6666"
+format = "took [$duration]($style) "
+
+[python]
+symbol = "\uf235 "
+style = "bold #B0851F"
+format = "[$symbol$version]($style) "
+
+[rust]
+symbol = "\ue7a8 "
+style = "bold #D68C27"
+format = "[$symbol$version]($style) "
+
+[nodejs]
+symbol = "\uf898 "
+style = "bold #3D9A57"
+format = "[$symbol$version]($style) "
+
+[golang]
+symbol = "\ue626 "
+style = "bold #318795"
+format = "[$symbol$version]($style) "

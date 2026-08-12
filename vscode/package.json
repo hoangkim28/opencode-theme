@@ -1,0 +1,34 @@
+{
+    "name": "opencode-theme",
+    "displayName": "OpenCode Theme",
+    "description": "OpenCode Dark & Light — warm charcoal and ivory themes from the opencode.ai palette",
+    "version": "1.0.0",
+    "publisher": "opencode-theme",
+    "license": "MIT",
+    "engines": {
+        "vscode": "^1.60.0"
+    },
+    "categories": [
+        "Themes"
+    ],
+    "keywords": [
+        "opencode",
+        "dark",
+        "light",
+        "theme"
+    ],
+    "contributes": {
+        "themes": [
+            {
+                "label": "OpenCode Dark",
+                "uiTheme": "vs-dark",
+                "path": "./themes/opencode-dark.json"
+            },
+            {
+                "label": "OpenCode Light",
+                "uiTheme": "vs",
+                "path": "./themes/opencode-light.json"
+            }
+        ]
+    }
+}

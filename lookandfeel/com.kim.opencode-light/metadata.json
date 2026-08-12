@@ -1,0 +1,18 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "sup.hoangkim@gmail.com",
+                "Name": "OpenCode Theme"
+            }
+        ],
+        "Category": "",
+        "Description": "Warm-light Global Theme based on the opencode.ai palette, with the amber accent and a dot-grid prompt wallpaper. Unofficial community theme, not affiliated with Anomaly.",
+        "Id": "com.kim.opencode-light",
+        "License": "MIT",
+        "Name": "OpenCode Light",
+        "Version": "1.0.0",
+        "Website": "https://opencode.ai"
+    }
+}

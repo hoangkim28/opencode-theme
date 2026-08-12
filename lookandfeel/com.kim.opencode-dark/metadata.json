@@ -1,0 +1,18 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "sup.hoangkim@gmail.com",
+                "Name": "OpenCode Theme"
+            }
+        ],
+        "Category": "",
+        "Description": "Warm-dark Global Theme based on the opencode.ai palette, with the peach accent and a dot-grid prompt wallpaper. Unofficial community theme, not affiliated with Anomaly.",
+        "Id": "com.kim.opencode-dark",
+        "License": "MIT",
+        "Name": "OpenCode Dark",
+        "Version": "1.0.0",
+        "Website": "https://opencode.ai"
+    }
+}

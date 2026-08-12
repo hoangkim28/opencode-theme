@@ -1,0 +1,39 @@
+# OpenCode Light — alacritty color scheme
+# Usage: add this to your ~/.config/alacritty/alacritty.toml
+#
+#   [general]
+#   import = ["~/.config/alacritty/opencode-light.toml"]
+#
+# (or copy the [colors.*] blocks below directly into your config)
+
+[colors.primary]
+background = "0xF1ECEC"
+foreground = "0x211E1E"
+
+[colors.cursor]
+text   = "0xF1ECEC"
+cursor = "0xD68C27"
+
+[colors.selection]
+text       = "0xF1ECEC"
+background = "0xD68C27"
+
+[colors.normal]
+black   = "0x4B4646"
+red     = "0xD1383D"
+green   = "0x3D9A57"
+yellow  = "0xB0851F"
+blue    = "0x3B7DD8"
+magenta = "0x9D7CD8"
+cyan    = "0x318795"
+white   = "0x211E1E"
+
+[colors.bright]
+black   = "0x8A8585"
+red     = "0xE84A50"
+green   = "0x4FB86C"
+yellow  = "0xD08F2A"
+blue    = "0x2968C3"
+magenta = "0xB08DE8"
+cyan    = "0x3D9FB0"
+white   = "0x1A1A1A"
