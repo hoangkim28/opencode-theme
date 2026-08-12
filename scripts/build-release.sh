@@ -43,6 +43,15 @@ done
 
 node "$ROOT/scripts/validate-theme.mjs"
 
+REPOSITORY_SYMLINK="$(find "$ROOT" \
+    \( -path "$ROOT/.git" -o -path "$ROOT/dist" -o \
+       -path "$ROOT/.dist.next.*" -o -path "$ROOT/.dist.previous.*" \) -prune \
+    -o -type l -print -quit)"
+if [[ -n "$REPOSITORY_SYMLINK" ]]; then
+    echo "ERROR: release source contains a symlink: $REPOSITORY_SYMLINK" >&2
+    exit 1
+fi
+
 copy_tree() {
     local source="$1" destination="$2"
     mkdir -p "$destination"

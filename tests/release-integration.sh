@@ -5,8 +5,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VERSION="$(tr -d '[:space:]' < "$ROOT/VERSION")"
 TEST_TMP="$(mktemp -d)"
 SYMLINK_TEST="$ROOT/terminals/.release-test-link"
+TOP_LEVEL_SYMLINK_TEST="$ROOT/.release-test-top-level-link"
 cleanup() {
-    rm -f -- "$SYMLINK_TEST"
+    rm -f -- "$SYMLINK_TEST" "$TOP_LEVEL_SYMLINK_TEST"
     rm -rf -- "$TEST_TMP"
 }
 trap cleanup EXIT
@@ -37,6 +38,14 @@ if scripts/build-release.sh >/dev/null 2>&1; then
 fi
 test -f dist/.preserve-on-failure
 rm -f -- "$SYMLINK_TEST" dist/.preserve-on-failure
+
+ln -s /etc/passwd "$TOP_LEVEL_SYMLINK_TEST"
+if scripts/build-release.sh >/dev/null 2>&1; then
+    echo "release build unexpectedly accepted a top-level source symlink" >&2
+    exit 1
+fi
+test -f dist/SHA256SUMS
+rm -f -- "$TOP_LEVEL_SYMLINK_TEST"
 
 scripts/build-release.sh >/dev/null
 cmp "$TEST_TMP/first-sums" dist/SHA256SUMS
