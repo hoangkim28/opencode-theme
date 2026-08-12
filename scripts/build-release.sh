@@ -161,11 +161,12 @@ if [[ -e "$BACKUP" ]]; then
     echo "ERROR: unexpected release backup already exists: $BACKUP" >&2
     exit 1
 fi
-PUBLISHING=true
+trap '' HUP INT TERM
 if [[ -e "$DIST" ]]; then
     mv "$DIST" "$BACKUP"
     OLD_MOVED=true
 fi
+PUBLISHING=true
 if [[ "${OPENCODE_BUILD_FAILPOINT:-}" == "after-backup" ]]; then
     echo "ERROR: requested test failpoint after backup" >&2
     exit 99
@@ -174,9 +175,11 @@ if mv "$OUT" "$DIST"; then
     PUBLISHED=true
     [[ ! -e "$BACKUP" ]] || rm -rf -- "$BACKUP"
 else
-    [[ ! -e "$BACKUP" ]] || mv "$BACKUP" "$DIST"
     echo "ERROR: unable to publish release output" >&2
     exit 1
 fi
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 echo "Release $VERSION written to $DIST"
