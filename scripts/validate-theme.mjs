@@ -118,6 +118,32 @@ function validateTerminalSelections() {
   return 3;
 }
 
+function validateComponentMetadata(requiredVersion) {
+  const metadataFiles = [
+    "wallpaper/OpenCode/metadata.json",
+    "lookandfeel/com.kim.opencode-dark/metadata.json",
+    "lookandfeel/com.kim.opencode-light/metadata.json",
+    "desktoptheme/opencode-dark/metadata.json",
+    "desktoptheme/opencode-light/metadata.json",
+    "splash/com.kim.opencode-splash/metadata.json",
+  ];
+  for (const file of metadataFiles) {
+    const metadata = readJson(file);
+    assert.equal(
+      metadata.KPlugin?.Version,
+      requiredVersion,
+      `${file}: version must match VERSION`,
+    );
+  }
+  const wallpaper = readJson("wallpaper/OpenCode/metadata.json");
+  assert.equal(
+    wallpaper.KPackageStructure,
+    "Wallpaper/Images",
+    "wallpaper must use the static image package structure",
+  );
+  return metadataFiles.length;
+}
+
 export function validateRepository() {
   const requiredVersion = readFileSync(join(root, "VERSION"), "utf8").trim();
   const vscodePackage = readJson("vscode/package.json");
@@ -128,7 +154,8 @@ export function validateRepository() {
     validateVsCodeTheme("vscode/themes/opencode-dark.json") +
     validateVsCodeTheme("vscode/themes/opencode-light.json") +
     validateTerminalSelections();
-  return { files: 6, contrastPairs };
+  const metadataFiles = validateComponentMetadata(requiredVersion);
+  return { files: 6 + metadataFiles, contrastPairs };
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {

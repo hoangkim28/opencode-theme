@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Remove the "OpenCode" theme files (both dark and light). Does not change your
 # active theme; switch to another Global Theme first in System Settings.
-set -e
+set -euo pipefail
 DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
 CONF="${XDG_CONFIG_HOME:-$HOME/.config}"
 

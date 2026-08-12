@@ -2,12 +2,19 @@
 # Install the "OpenCode" KDE Plasma Global Themes (dark + light) + terminal themes.
 # Re-runnable. Backs up nothing it overwrites (files are replaced wholesale).
 # Usage: ./install.sh [dark|light|noapply]   (default: dark)
-set -e
+set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
 CONF="${XDG_CONFIG_HOME:-$HOME/.config}"
 MODE="${1:-dark}"
+case "$MODE" in
+    dark|light|noapply) ;;
+    *)
+        echo "Usage: $0 [dark|light|noapply]" >&2
+        exit 2
+        ;;
+esac
 
 echo "==> Installing OpenCode themes (mode: $MODE)"
 
@@ -52,11 +59,11 @@ cp -r "$HERE/splash/com.kim.opencode-splash" "$DATA/plasma/look-and-feel/"
 
 # 7. Terminal themes (ghostty / kitty / wezterm importable files)
 mkdir -p "$CONF/ghostty/themes"
-cp "$HERE/terminals/ghostty/opencode-dark" "$HERE/terminals/ghostty/opencode-light" "$CONF/ghostty/themes/" 2>/dev/null || true
+cp "$HERE/terminals/ghostty/opencode-dark" "$HERE/terminals/ghostty/opencode-light" "$CONF/ghostty/themes/"
 mkdir -p "$CONF/kitty"
-cp "$HERE/terminals/kitty/opencode-dark.conf" "$HERE/terminals/kitty/opencode-light.conf" "$CONF/kitty/" 2>/dev/null || true
+cp "$HERE/terminals/kitty/opencode-dark.conf" "$HERE/terminals/kitty/opencode-light.conf" "$CONF/kitty/"
 mkdir -p "$CONF/wezterm"
-cp "$HERE/terminals/wezterm/opencode-dark.lua" "$HERE/terminals/wezterm/opencode-light.lua" "$CONF/wezterm/" 2>/dev/null || true
+cp "$HERE/terminals/wezterm/opencode-dark.lua" "$HERE/terminals/wezterm/opencode-light.lua" "$CONF/wezterm/"
 echo "    ghostty:  themes are at ~/.config/ghostty/themes/ (theme = opencode-dark)"
 echo "    kitty:    include ~/.config/kitty/opencode-dark.conf in kitty.conf"
 echo "    wezterm:  dofile('~/.config/wezterm/opencode-dark.lua').colors in wezterm.lua"
@@ -82,25 +89,55 @@ else
     PROFILE="OpenCodeDark.profile"; DESKTHEME="opencode-dark"
 fi
 
-if command -v plasma-apply-lookandfeel >/dev/null 2>&1; then
-    echo "==> Applying OpenCode ${MODE^} to the current session"
-    plasma-apply-lookandfeel -a "$PKG" || true
-    # Global theme doesn't force colors by default in newer Plasma; set explicitly.
-    plasma-apply-colorscheme "$SCHEME" || true
-    plasma-apply-desktoptheme "$DESKTHEME" || true
-    command -v kwriteconfig6 >/dev/null && kwriteconfig6 --file kdeglobals --group General --key AccentColor "$ACCENT"
-    command -v kwriteconfig6 >/dev/null && kwriteconfig6 --file konsolerc --group "Desktop Entry" --key DefaultProfile "$PROFILE"
-    command -v kwriteconfig6 >/dev/null && kwriteconfig6 --file ksplashrc --group KSplash --key Theme "com.kim.opencode-splash"
-    # Point at the wallpaper *package* (not a single image file) so Plasma
-    # auto-selects the dark/light variant to match the applied color scheme.
-    plasma-apply-wallpaperimage "$DATA/wallpapers/OpenCode/" || true
-    # clear any stale global wallpaper override that would pin a single variant
-    command -v kwriteconfig6 >/dev/null && kwriteconfig6 --file plasmarc --group Wallpapers --key usersWallpapers ""
-    if command -v qdbus >/dev/null 2>&1; then
-        qdbus org.kde.KWin /KWin org.kde.KWin.reconfigure 2>/dev/null || true
-    elif command -v qdbus-qt6 >/dev/null 2>&1; then
-        qdbus-qt6 org.kde.KWin /KWin org.kde.KWin.reconfigure 2>/dev/null || true
+APPLY_FAILURES=0
+run_apply() {
+    local label="$1"
+    shift
+    if ! "$@"; then
+        echo "ERROR: failed to apply $label" >&2
+        APPLY_FAILURES=$((APPLY_FAILURES + 1))
     fi
+}
+
+run_core_apply() {
+    local label="$1" command_name="$2"
+    shift 2
+    if command -v "$command_name" >/dev/null 2>&1; then
+        run_apply "$label" "$command_name" "$@"
+    else
+        echo "WARNING: $command_name is unavailable; $label was installed but not applied" >&2
+    fi
+}
+
+echo "==> Applying OpenCode ${MODE^} to the current session"
+run_core_apply "global theme" plasma-apply-lookandfeel -a "$PKG"
+run_core_apply "color scheme" plasma-apply-colorscheme "$SCHEME"
+run_core_apply "desktop theme" plasma-apply-desktoptheme "$DESKTHEME"
+run_core_apply "wallpaper" plasma-apply-wallpaperimage "$DATA/wallpapers/OpenCode/"
+
+if command -v kwriteconfig6 >/dev/null 2>&1; then
+    run_apply "accent color" kwriteconfig6 --file kdeglobals --group General --key AccentColor "$ACCENT"
+    run_apply "Konsole profile" kwriteconfig6 --file konsolerc --group "Desktop Entry" --key DefaultProfile "$PROFILE"
+    run_apply "splash theme" kwriteconfig6 --file ksplashrc --group KSplash --key Theme "com.kim.opencode-splash"
+    run_apply "wallpaper override reset" kwriteconfig6 --file plasmarc --group Wallpapers --key usersWallpapers ""
+else
+    echo "WARNING: kwriteconfig6 is unavailable; session preferences were not updated" >&2
+fi
+
+if command -v qdbus >/dev/null 2>&1; then
+    if ! qdbus org.kde.KWin /KWin org.kde.KWin.reconfigure; then
+        echo "WARNING: KWin reconfigure request failed" >&2
+    fi
+elif command -v qdbus-qt6 >/dev/null 2>&1; then
+    if ! qdbus-qt6 org.kde.KWin /KWin org.kde.KWin.reconfigure; then
+        echo "WARNING: KWin reconfigure request failed" >&2
+    fi
+else
+    echo "WARNING: qdbus is unavailable; KWin was not reconfigured" >&2
 fi
 
 echo "==> Done. Pick 'OpenCode Dark' or 'OpenCode Light' in System Settings > Colors & Themes > Global Theme."
+if ((APPLY_FAILURES > 0)); then
+    echo "ERROR: $APPLY_FAILURES apply operation(s) failed; installed files were kept" >&2
+    exit 1
+fi

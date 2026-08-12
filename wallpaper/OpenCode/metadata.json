@@ -1,5 +1,5 @@
 {
-    "KPackageStructure": "Plasma/Wallpaper",
+    "KPackageStructure": "Wallpaper/Images",
     "KPlugin": {
         "Authors": [
             {
@@ -10,6 +10,7 @@
         "Id": "OpenCode",
         "License": "MIT",
         "Name": "OpenCode",
+        "Version": "1.0.0",
         "Description": "OpenCode minimal wordmark wallpaper with light and dark variants that follow the Plasma color scheme."
     }
 }
