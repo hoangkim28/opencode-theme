@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Regenerate the OpenCode wallpaper pair (dark + light). Requires ImageMagick 7.
-# Minimal design: warm neutral base, very soft center glow, and the official
-# OpenCode simple wordmark centered (white on dark / black on light).
+# Minimal design: a uniform warm neutral base and the official OpenCode simple
+# wordmark centered (white on dark / black on light). Keeping the base uniform
+# avoids visible concentric color bands on large displays.
 # Output: one wallpaper package "OpenCode" with light/dark variants:
 #   contents/images/        light variant (used with light color schemes)
 #   contents/images_dark/   dark variant (used with dark color schemes)
@@ -28,8 +29,8 @@ cleanup() {
 trap cleanup EXIT
 
 make_wallpaper() {
-    # $1 base  $2 glow  $3 wordmark-png  $4 vignette  $5 out
-    local BASE="$1" GLOW="$2" WORDMARK="$3" VIGN="$4" OUT="$5"
+    # $1 base  $2 wordmark-png  $3 out
+    local BASE="$1" WORDMARK="$2" OUT="$3"
     local WORDTMP WW WH
 
     # official wordmark centered, scaled to 30% of canvas width
@@ -41,14 +42,14 @@ make_wallpaper() {
     WW="$(magick identify -format '%w' "$WORDTMP")"
     WH="$(magick identify -format '%h' "$WORDTMP")"
 
+    # Keep the background flat: radial glow/vignette layers create visible
+    # concentric circles and shift the intended theme color across the canvas.
     magick -size "$SIZE" xc:"$BASE" \
-        \( -size "$SIZE" radial-gradient:"$GLOW"-none \) -compose over -composite \
         \( "$WORDTMP" \) -gravity Center -compose over -composite \
-        \( -size "$SIZE" radial-gradient:'rgba(255,255,255,0)'-"$VIGN" \) -compose over -composite \
-        -attenuate 0.04 +noise Gaussian -depth 8 -strip -quality 92 "$OUT"
+        -depth 8 -strip -quality 92 "$OUT"
 
     echo "Wrote $OUT ($SIZE)"
 }
 
-make_wallpaper '#211E1E' 'rgba(250,178,131,0.10)' "$HERE/../assets/opencode-wordmark-simple-dark.png" 'rgba(12,12,12,0.72)' "$OUTDIR/OpenCode/contents/images_dark/$SIZE.png"
-make_wallpaper '#F1ECEC' 'rgba(214,140,39,0.08)' "$HERE/../assets/opencode-wordmark-simple-light.png" 'rgba(96,90,90,0.12)' "$OUTDIR/OpenCode/contents/images/$SIZE.png"
+make_wallpaper '#211E1E' "$HERE/../assets/opencode-wordmark-simple-dark.png" "$OUTDIR/OpenCode/contents/images_dark/$SIZE.png"
+make_wallpaper '#F1ECEC' "$HERE/../assets/opencode-wordmark-simple-light.png" "$OUTDIR/OpenCode/contents/images/$SIZE.png"
