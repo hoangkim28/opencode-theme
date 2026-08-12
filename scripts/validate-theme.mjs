@@ -118,6 +118,132 @@ function validateTerminalSelections() {
   return 3;
 }
 
+function colorsFromText(content) {
+  return [...content.matchAll(/(?:#|0x)([0-9a-f]{6})/gi)].map(
+    (match) => `#${match[1].toUpperCase()}`,
+  );
+}
+
+function validateColorList(label, colors, background) {
+  assert.ok(colors.length > 0, `${label}: no colors found`);
+  for (const [index, color] of colors.entries()) {
+    assertContrast(`${label}[${index}]`, color, background);
+  }
+  return colors.length;
+}
+
+function validateLightTerminalPalettes() {
+  const background = "#F1ECEC";
+  let pairs = 0;
+
+  const alacritty = readFileSync(join(root, "alacritty/opencode-light.toml"), "utf8");
+  const alacrittyTextColors = [...alacritty.matchAll(
+    /^\s*(?:foreground|black|red|green|yellow|blue|magenta|cyan|white)\s*=\s*["'](0x[0-9a-f]{6})["']/gim,
+  )].map((match) => match[1].replace(/^0x/i, "#"));
+  pairs += validateColorList("Alacritty light palette", alacrittyTextColors, background);
+
+  const ghostty = readFileSync(join(root, "terminals/ghostty/opencode-light"), "utf8");
+  const ghosttyTextColors = [...ghostty.matchAll(
+    /^\s*(?:foreground|palette)\s*=\s*(?:\d+=)?([0-9a-f]{6})\s*$/gim,
+  )].map((match) => `#${match[1]}`);
+  pairs += validateColorList("Ghostty light palette", ghosttyTextColors, background);
+
+  const kitty = readFileSync(join(root, "terminals/kitty/opencode-light.conf"), "utf8");
+  const kittyTextColors = [...kitty.matchAll(
+    /^\s*(?:foreground|color\d+)\s+#([0-9a-f]{6})\s*$/gim,
+  )].map((match) => `#${match[1]}`);
+  pairs += validateColorList("Kitty light palette", kittyTextColors, background);
+
+  const wezterm = readFileSync(join(root, "terminals/wezterm/opencode-light.lua"), "utf8");
+  const weztermTextColors = [];
+  for (const blockName of ["ansi", "brights"]) {
+    const block = wezterm.match(new RegExp(`${blockName}\\s*=\\s*\\{([\\s\\S]*?)\\}`));
+    assert.ok(block, `WezTerm light: missing ${blockName} block`);
+    weztermTextColors.push(...colorsFromText(block[1]));
+  }
+  pairs += validateColorList("WezTerm light palette", weztermTextColors, background);
+
+  const konsole = readFileSync(join(root, "konsole/OpenCodeLight.colorscheme"), "utf8");
+  let section = "";
+  const konsoleTextColors = [];
+  for (const line of konsole.split("\n")) {
+    const heading = line.match(/^\[([^\]]+)\]$/);
+    if (heading) section = heading[1];
+    const color = line.match(/^Color=(\d+),(\d+),(\d+)$/);
+    if (color && (/^Color[0-7](?:Intense)?$/.test(section) || /^Foreground/.test(section))) {
+      konsoleTextColors.push(
+        `#${color.slice(1).map((channel) => Number(channel).toString(16).padStart(2, "0")).join("")}`,
+      );
+    }
+  }
+  pairs += validateColorList("Konsole light palette", konsoleTextColors, background);
+
+  const starship = readFileSync(join(root, "starship/opencode-light.toml"), "utf8");
+  const starshipTextColors = [];
+  for (const line of starship.split("\n")) {
+    if (/^(?:success_symbol|error_symbol|vimcmd_symbol|style(?:_user|_root)?)\s*=/.test(line.trim())) {
+      starshipTextColors.push(...colorsFromText(line));
+    }
+  }
+  pairs += validateColorList("Starship light palette", starshipTextColors, background);
+  return { files: 6, pairs };
+}
+
+function parseKdeColorScheme(relativePath) {
+  const content = readFileSync(join(root, relativePath), "utf8");
+  const sections = new Map();
+  let section;
+  for (const line of content.split("\n")) {
+    const heading = line.match(/^\[([^\]]+(?:\]\[[^\]]+)?)\]$/);
+    if (heading) {
+      section = heading[1];
+      sections.set(section, new Map());
+      continue;
+    }
+    const assignment = line.match(/^([^=]+)=(\d+),(\d+),(\d+)$/);
+    if (section && assignment) {
+      const hex = `#${assignment.slice(2).map((channel) => Number(channel).toString(16).padStart(2, "0")).join("")}`;
+      sections.get(section).set(assignment[1], hex);
+    }
+  }
+  return sections;
+}
+
+function validateKdeLightSchemes() {
+  const files = [
+    "colors/OpenCodeLight.colors",
+    "desktoptheme/opencode-light/colors",
+    "lookandfeel/com.kim.opencode-light/contents/colorschemes/OpenCodeLight.colors",
+  ];
+  const canonical = readFileSync(join(root, files[0]), "utf8");
+  let pairs = 0;
+  const foregroundRoles = [
+    "ForegroundNormal",
+    "ForegroundActive",
+    "ForegroundLink",
+    "ForegroundNegative",
+    "ForegroundNeutral",
+    "ForegroundPositive",
+    "ForegroundVisited",
+  ];
+  for (const file of files) {
+    assert.equal(readFileSync(join(root, file), "utf8"), canonical, `${file}: light KDE palette drift`);
+    const sections = parseKdeColorScheme(file);
+    for (const [name, values] of sections) {
+      if (!name.startsWith("Colors:")) continue;
+      const background = values.get("BackgroundNormal");
+      assert.ok(background, `${file}: ${name} missing BackgroundNormal`);
+      for (const role of foregroundRoles) {
+        const foreground = values.get(role);
+        assert.ok(foreground, `${file}: ${name} missing ${role}`);
+        assertContrast(`${file}: ${name} ${role}`, foreground, background);
+        pairs += 1;
+      }
+    }
+  }
+  return { files: files.length, pairs };
+}
+
 function validateComponentMetadata(requiredVersion) {
   const metadataFiles = [
     "wallpaper/OpenCode/metadata.json",
@@ -165,8 +291,13 @@ export function validateRepository() {
     validateVsCodeTheme("vscode/themes/opencode-dark.json") +
     validateVsCodeTheme("vscode/themes/opencode-light.json") +
     validateTerminalSelections();
+  const terminalPalettes = validateLightTerminalPalettes();
+  const kdeSchemes = validateKdeLightSchemes();
   const metadataFiles = validateComponentMetadata(requiredVersion);
-  return { files: 6 + metadataFiles, contrastPairs };
+  return {
+    files: 6 + metadataFiles + terminalPalettes.files + kdeSchemes.files,
+    contrastPairs: contrastPairs + terminalPalettes.pairs + kdeSchemes.pairs,
+  };
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {

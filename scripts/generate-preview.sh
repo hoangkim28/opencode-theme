@@ -79,7 +79,7 @@ make_preview "$HERE/../wallpaper/OpenCode/contents/images_dark/3840x2160.png" "O
     "#5C9CF5|blue" "#9D7CD8|purple"
 make_preview "$HERE/../wallpaper/OpenCode/contents/images/3840x2160.png" "OpenCode Light" '#211E1E' '#6B6666' "$OUTDIR/preview-light.png" \
     "#F1ECEC|bg" "#E7E1E1|surface" "#211E1E|text" "#D68C27|accent" \
-    "#C47A22|hover" "#B06F1E|deep" "#3D9A57|green" "#B0851F|yellow" \
-    "#3B7DD8|blue" "#9D7CD8|purple"
+    "#C47A22|hover" "#8A5200|amber" "#257A3E|green" "#7A5B00|yellow" \
+    "#2968C3|blue" "#7651B5|purple"
 
 echo "Wrote $OUTDIR/preview-dark.png and $OUTDIR/preview-light.png ($SIZE)"

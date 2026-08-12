@@ -29,7 +29,7 @@ cyan    = "0x1E6E79"
 white   = "0x211E1E"
 
 [colors.bright]
-black   = "0x8A8585"
+black   = "0x6B6666"
 red     = "0xB52A30"
 green   = "0x257A3E"
 yellow  = "0x7A5B00"
