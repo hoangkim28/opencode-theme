@@ -70,10 +70,55 @@ echo "    kitty:    include ~/.config/kitty/opencode-dark.conf in kitty.conf"
 echo "    wezterm:  dofile('~/.config/wezterm/opencode-dark.lua').colors in wezterm.lua"
 echo "    starship: cp starship/opencode-dark.toml ~/.config/starship.toml"
 
+APPLY_FAILURES=0
+run_apply() {
+    local label="$1"
+    shift
+    if ! "$@"; then
+        echo "ERROR: failed to apply $label" >&2
+        APPLY_FAILURES=$((APPLY_FAILURES + 1))
+        return 1
+    fi
+}
+
+run_core_apply() {
+    local label="$1" command_name="$2"
+    shift 2
+    if command -v "$command_name" >/dev/null 2>&1; then
+        run_apply "$label" "$command_name" "$@"
+    else
+        echo "WARNING: $command_name is unavailable; $label was installed but not applied" >&2
+    fi
+}
+
 # 8. VS Code theme extension (packaged .vsix)
+VSIX=""
 if [ -f "$HERE/vscode/opencode-theme-$RELEASE_VERSION.vsix" ]; then
-    cp "$HERE/vscode/opencode-theme-$RELEASE_VERSION.vsix" "$CONF/opencode-theme.vsix"
-    echo "    vscode:   code --install-extension $CONF/opencode-theme.vsix"
+    VSIX="$HERE/vscode/opencode-theme-$RELEASE_VERSION.vsix"
+elif [ -f "$HERE/dist/opencode-theme-$RELEASE_VERSION.vsix" ]; then
+    VSIX="$HERE/dist/opencode-theme-$RELEASE_VERSION.vsix"
+fi
+
+if [ -n "$VSIX" ]; then
+    cp "$VSIX" "$CONF/opencode-theme.vsix"
+    if [ "$MODE" != "noapply" ]; then
+        CODE_BIN=""
+        if command -v code >/dev/null 2>&1; then
+            CODE_BIN=code
+        elif command -v codium >/dev/null 2>&1; then
+            CODE_BIN=codium
+        fi
+        if [ -n "$CODE_BIN" ]; then
+            if run_apply "VS Code theme extension" "$CODE_BIN" --install-extension "$CONF/opencode-theme.vsix"; then
+                echo "    vscode:   installed via $CODE_BIN --install-extension $CONF/opencode-theme.vsix"
+            fi
+        else
+            echo "WARNING: neither code nor codium is installed; VS Code theme was copied to $CONF/opencode-theme.vsix but not installed" >&2
+            echo "    vscode:   code --install-extension $CONF/opencode-theme.vsix"
+        fi
+    else
+        echo "    vscode:   code --install-extension $CONF/opencode-theme.vsix"
+    fi
 else
     echo "    vscode:   VSIX is generated at release build; run scripts/build-release.sh and install it from dist/"
 fi
@@ -91,26 +136,6 @@ else
     PKG="com.kim.opencode-dark"; SCHEME="OpenCodeDark"; ACCENT="250,178,131"
     PROFILE="OpenCodeDark.profile"; DESKTHEME="opencode-dark"
 fi
-
-APPLY_FAILURES=0
-run_apply() {
-    local label="$1"
-    shift
-    if ! "$@"; then
-        echo "ERROR: failed to apply $label" >&2
-        APPLY_FAILURES=$((APPLY_FAILURES + 1))
-    fi
-}
-
-run_core_apply() {
-    local label="$1" command_name="$2"
-    shift 2
-    if command -v "$command_name" >/dev/null 2>&1; then
-        run_apply "$label" "$command_name" "$@"
-    else
-        echo "WARNING: $command_name is unavailable; $label was installed but not applied" >&2
-    fi
-}
 
 echo "==> Applying OpenCode ${MODE^} to the current session"
 run_core_apply "global theme" plasma-apply-lookandfeel -a "$PKG"

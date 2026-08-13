@@ -123,11 +123,18 @@ For Konsole, *Settings → Switch Profile → OpenCode Dark / OpenCode Light*
 
 ```bash
 cp starship/opencode-dark.toml ~/.config/starship.toml   # requires starship
-code --install-extension ~/.config/opencode-theme.vsix   # after installing the full bundle
-# source checkout after build: code --install-extension dist/opencode-theme-1.0.0.vsix
 # ghostty:  theme = opencode-dark
 # kitty:    include ~/.config/kitty/opencode-dark.conf
 # wezterm:  dofile('~/.config/wezterm/opencode-dark.lua').colors
+```
+
+`./install.sh` installs the VS Code extension automatically when `code` or
+`codium` is on your PATH (the `.vsix` is picked up from the release bundle, or
+from `dist/` after `scripts/build-release.sh`). If you used `noapply` or no
+editor CLI was found, install it manually:
+
+```bash
+code --install-extension ~/.config/opencode-theme.vsix
 ```
 
 ### Boot splash, lock screen and login screen
@@ -190,8 +197,11 @@ Re-run `./install.sh` — it clears the stale `usersWallpapers` override in `pla
 **Konsole profile doesn't show up**
 Restart Konsole, or pick it manually: *Settings → Switch Profile → OpenCode Dark / OpenCode Light*.
 
-**`code --install-extension` fails**
-Install the .vsix manually: *Extensions → … → Install from VSIX…* → `~/.config/opencode-theme.vsix`.
+**VS Code theme didn't install**
+`./install.sh` auto-installs the extension only when `code`/`codium` is on your
+PATH and you didn't use `noapply`. Otherwise (or if the CLI install failed)
+install the `.vsix` manually: *Extensions → … → Install from VSIX…* →
+`~/.config/opencode-theme.vsix`.
 
 **Theme applies but the panel still looks default**
 Run `./install.sh` again (it applies the Plasma desktop theme `opencode-dark`/`opencode-light` explicitly), then re-login if it still doesn't change.
